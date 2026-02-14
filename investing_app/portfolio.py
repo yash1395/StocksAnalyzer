@@ -92,9 +92,9 @@ class Portfolio:
     def add_position(self, ticker: str, quantity: float, average_cost: float) -> Position:
         ticker = ticker.upper()
         if quantity <= 0:
-            raise ValueError("quantity must be positive")
+            return
         if average_cost <= 0:
-            raise ValueError("average_cost must be positive")
+            return
 
         if ticker in self.positions:
             existing = self.positions[ticker]
