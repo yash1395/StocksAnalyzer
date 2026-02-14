@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import csv
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List
 
 
@@ -75,3 +77,25 @@ class Portfolio:
             }
             for ticker, p in self.positions.items()
         }
+
+    def load_positions_from_sheet(self, sheet_path: str | Path) -> None:
+        """
+        Load portfolio positions from a CSV sheet.
+
+        Required headers:
+        - ticker
+        - quantity
+        - average_cost
+        """
+        path = Path(sheet_path)
+        with path.open(newline="", encoding="utf-8") as csv_file:
+            reader = csv.DictReader(csv_file)
+            required = {"ticker", "quantity", "average_cost"}
+            if not reader.fieldnames or not required.issubset({f.strip() for f in reader.fieldnames}):
+                raise ValueError("Sheet must include headers: ticker, quantity, average_cost")
+
+            for row in reader:
+                ticker = (row.get("ticker") or "").strip()
+                quantity = float((row.get("quantity") or "0").strip())
+                average_cost = float((row.get("average_cost") or "0").strip())
+                self.add_position(ticker=ticker, quantity=quantity, average_cost=average_cost)

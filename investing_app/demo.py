@@ -1,11 +1,21 @@
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
 from investing_app.ideas import MarketPoint, SocialPost, TradeIdeaEngine
 from investing_app.portfolio import Portfolio
 
 
-def run_demo() -> None:
+def run_demo(portfolio_sheet_path: str | None = None) -> None:
     portfolio = Portfolio()
-    portfolio.add_position("AAPL", 10, 180)
-    portfolio.add_position("NVDA", 5, 900)
+
+    if portfolio_sheet_path:
+        portfolio.load_positions_from_sheet(portfolio_sheet_path)
+    else:
+        portfolio.add_position("AAPL", 10, 180)
+        portfolio.add_position("NVDA", 5, 900)
+
     portfolio.add_update("AAPL", "Added on pullback after earnings", source="journal")
     portfolio.add_update("NVDA", "Watching AI demand trend", source="journal")
 
@@ -49,5 +59,16 @@ def run_demo() -> None:
         print(f"- {idea.ticker}: score={idea.score:.2f} | {idea.rationale}")
 
 
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Run StocksAnalyzer demo")
+    parser.add_argument(
+        "--portfolio-sheet",
+        type=Path,
+        help="Path to a CSV sheet with headers: ticker,quantity,average_cost",
+    )
+    return parser
+
+
 if __name__ == "__main__":
-    run_demo()
+    args = _build_parser().parse_args()
+    run_demo(str(args.portfolio_sheet) if args.portfolio_sheet else None)
