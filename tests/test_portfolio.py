@@ -47,6 +47,25 @@ class PortfolioTests(unittest.TestCase):
             self.assertEqual(p.positions["MSFT"].quantity, 3)
             self.assertEqual(p.positions["MSFT"].average_cost, 410)
 
+    def test_load_positions_from_sheet_with_brokerage_export_columns(self):
+        content = (
+            "Account Number	Account Name	Symbol	Description	Quantity	Last Price	Last Price Change	"
+            "Current Value	Today's Gain/Loss Dollar	Today's Gain/Loss Percent	Total Gain/Loss Dollar	"
+            "Total Gain/Loss Percent	Percent Of Account	Cost Basis Total	Average Cost Basis	Type\n"
+            "12345	Brokerage	AAPL	Apple Inc	10	$210.00	$1.00	$2,100.00	$10.00	0.5%	$300.00	"
+            "16.7%	20%	$1,800.00	$180.00	Equity\n"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "portfolio_export.tsv"
+            path.write_text(content, encoding="utf-8")
+
+            p = Portfolio()
+            p.load_positions_from_sheet(path)
+
+            self.assertIn("AAPL", p.positions)
+            self.assertEqual(p.positions["AAPL"].quantity, 10)
+            self.assertEqual(p.positions["AAPL"].average_cost, 180)
+
 
 if __name__ == "__main__":
     unittest.main()

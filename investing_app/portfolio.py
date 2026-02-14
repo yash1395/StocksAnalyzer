@@ -46,6 +46,7 @@ class Portfolio:
         },
         "average_cost": {
             "averagecost",
+            "averagecostbasis",
             "avgcost",
             "avgprice",
             "averageprice",
@@ -63,6 +64,11 @@ class Portfolio:
     def _normalize_header(header: str) -> str:
         return "".join(ch for ch in header.strip().lower() if ch.isalnum())
 
+    @staticmethod
+    def _parse_number(value: str) -> float:
+        cleaned = value.strip().replace("$", "").replace(",", "")
+        return float(cleaned)
+
     @classmethod
     def _resolve_sheet_columns(cls, fieldnames: List[str]) -> Dict[str, str]:
         normalized_to_original = {cls._normalize_header(name): name for name in fieldnames if name}
@@ -78,7 +84,7 @@ class Portfolio:
         if missing:
             raise ValueError(
                 "Unable to detect required columns. "
-                "Please include ticker/tickr/symbol, quantity/qty/shares, and average_cost/averagecost/avgcost."
+                "Please include ticker/tickr/symbol, quantity/qty/shares, and average_cost/averagecost/avgcost/average cost basis."
             )
 
         return resolved
@@ -138,11 +144,21 @@ class Portfolio:
         Headers are auto-detected from common variants such as:
         - ticker: ticker, tickr, symbol
         - quantity: quantity, qty, shares
-        - average cost: average_cost, averagecost, avgcost
+        - average cost: average_cost, averagecost, avgcost, average cost basis
         """
         path = Path(sheet_path)
         with path.open(newline="", encoding="utf-8") as csv_file:
-            reader = csv.DictReader(csv_file)
+            sample = csv_file.read(2048)
+            csv_file.seek(0)
+
+            delimiter = ","
+            try:
+                dialect = csv.Sniffer().sniff(sample, delimiters=",\t;|")
+                delimiter = dialect.delimiter
+            except csv.Error:
+                pass
+
+            reader = csv.DictReader(csv_file, delimiter=delimiter)
             if not reader.fieldnames:
                 raise ValueError("Sheet is missing headers")
 
@@ -150,6 +166,6 @@ class Portfolio:
 
             for row in reader:
                 ticker = (row.get(columns["ticker"]) or "").strip()
-                quantity = float((row.get(columns["quantity"]) or "0").strip())
-                average_cost = float((row.get(columns["average_cost"]) or "0").strip())
+                quantity = self._parse_number((row.get(columns["quantity"]) or "0"))
+                average_cost = self._parse_number((row.get(columns["average_cost"]) or "0"))
                 self.add_position(ticker=ticker, quantity=quantity, average_cost=average_cost)

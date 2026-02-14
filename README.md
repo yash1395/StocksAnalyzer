@@ -4,7 +4,7 @@ A lightweight Python investing app prototype that:
 
 1. Tracks investments and investment updates.
 2. Stores notes/updates for each position over time.
-3. Reads portfolio holdings from a CSV sheet.
+3. Reads portfolio holdings from CSV/TSV sheets (brokerage exports supported).
 4. Generates trade ideas from:
    - social-media style updates (sentiment + ticker mentions)
    - popular stock frequency analysis (momentum + volume spike scan)
@@ -25,11 +25,11 @@ python -m investing_app.demo --portfolio-sheet /path/to/portfolio.csv
 
 ## Portfolio sheet format
 
-The loader auto-detects common header variants. It will understand columns like:
+The loader auto-detects delimiters (comma, tab, semicolon, pipe) and common header variants. It will understand columns like:
 
 - Ticker: `ticker`, `tickr`, `symbol`
 - Quantity: `quantity`, `qty`, `shares`
-- Average cost: `average_cost`, `averagecost`, `avgcost`, `avgprice`
+- Average cost: `average_cost`, `averagecost`, `avgcost`, `avgprice`, `Average Cost Basis`
 
 Extra columns are allowed and ignored.
 
