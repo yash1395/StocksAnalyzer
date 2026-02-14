@@ -34,6 +34,19 @@ class PortfolioTests(unittest.TestCase):
             self.assertEqual(p.positions["AAPL"].quantity, 10)
             self.assertEqual(p.positions["NVDA"].average_cost, 900)
 
+    def test_load_positions_from_sheet_with_alias_headers(self):
+        content = "tickr,qty,averagecost,notes\nMSFT,3,410,long term\n"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "portfolio_alias.csv"
+            path.write_text(content, encoding="utf-8")
+
+            p = Portfolio()
+            p.load_positions_from_sheet(path)
+
+            self.assertIn("MSFT", p.positions)
+            self.assertEqual(p.positions["MSFT"].quantity, 3)
+            self.assertEqual(p.positions["MSFT"].average_cost, 410)
+
 
 if __name__ == "__main__":
     unittest.main()

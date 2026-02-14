@@ -27,8 +27,61 @@ class Position:
 
 
 class Portfolio:
+    _HEADER_ALIASES = {
+        "ticker": {
+            "ticker",
+            "tickr",
+            "symbol",
+            "stock",
+            "stockticker",
+            "stocksymbol",
+        },
+        "quantity": {
+            "quantity",
+            "qty",
+            "shares",
+            "units",
+            "position",
+            "positionqty",
+        },
+        "average_cost": {
+            "averagecost",
+            "avgcost",
+            "avgprice",
+            "averageprice",
+            "cost",
+            "costprice",
+            "buyprice",
+            "entryprice",
+        },
+    }
+
     def __init__(self) -> None:
         self.positions: Dict[str, Position] = {}
+
+    @staticmethod
+    def _normalize_header(header: str) -> str:
+        return "".join(ch for ch in header.strip().lower() if ch.isalnum())
+
+    @classmethod
+    def _resolve_sheet_columns(cls, fieldnames: List[str]) -> Dict[str, str]:
+        normalized_to_original = {cls._normalize_header(name): name for name in fieldnames if name}
+        resolved: Dict[str, str] = {}
+
+        for canonical, aliases in cls._HEADER_ALIASES.items():
+            for alias in aliases:
+                if alias in normalized_to_original:
+                    resolved[canonical] = normalized_to_original[alias]
+                    break
+
+        missing = {"ticker", "quantity", "average_cost"} - set(resolved)
+        if missing:
+            raise ValueError(
+                "Unable to detect required columns. "
+                "Please include ticker/tickr/symbol, quantity/qty/shares, and average_cost/averagecost/avgcost."
+            )
+
+        return resolved
 
     def add_position(self, ticker: str, quantity: float, average_cost: float) -> Position:
         ticker = ticker.upper()
@@ -82,20 +135,21 @@ class Portfolio:
         """
         Load portfolio positions from a CSV sheet.
 
-        Required headers:
-        - ticker
-        - quantity
-        - average_cost
+        Headers are auto-detected from common variants such as:
+        - ticker: ticker, tickr, symbol
+        - quantity: quantity, qty, shares
+        - average cost: average_cost, averagecost, avgcost
         """
         path = Path(sheet_path)
         with path.open(newline="", encoding="utf-8") as csv_file:
             reader = csv.DictReader(csv_file)
-            required = {"ticker", "quantity", "average_cost"}
-            if not reader.fieldnames or not required.issubset({f.strip() for f in reader.fieldnames}):
-                raise ValueError("Sheet must include headers: ticker, quantity, average_cost")
+            if not reader.fieldnames:
+                raise ValueError("Sheet is missing headers")
+
+            columns = self._resolve_sheet_columns(reader.fieldnames)
 
             for row in reader:
-                ticker = (row.get("ticker") or "").strip()
-                quantity = float((row.get("quantity") or "0").strip())
-                average_cost = float((row.get("average_cost") or "0").strip())
+                ticker = (row.get(columns["ticker"]) or "").strip()
+                quantity = float((row.get(columns["quantity"]) or "0").strip())
+                average_cost = float((row.get(columns["average_cost"]) or "0").strip())
                 self.add_position(ticker=ticker, quantity=quantity, average_cost=average_cost)

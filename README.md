@@ -25,18 +25,20 @@ python -m investing_app.demo --portfolio-sheet /path/to/portfolio.csv
 
 ## Portfolio sheet format
 
-Create a CSV with headers:
+The loader auto-detects common header variants. It will understand columns like:
 
-- `ticker`
-- `quantity`
-- `average_cost`
+- Ticker: `ticker`, `tickr`, `symbol`
+- Quantity: `quantity`, `qty`, `shares`
+- Average cost: `average_cost`, `averagecost`, `avgcost`, `avgprice`
+
+Extra columns are allowed and ignored.
 
 Example:
 
 ```csv
-ticker,quantity,average_cost
-AAPL,10,180
-NVDA,5,900
+tickr,qty,averagecost,notes
+AAPL,10,180,long-term core
+NVDA,5,900,watch volatility
 ```
 
 ## Run tests
