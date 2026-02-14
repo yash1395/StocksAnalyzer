@@ -1,0 +1,1 @@
+"""StocksAnalyzer investing app package."""
